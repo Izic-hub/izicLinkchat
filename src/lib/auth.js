@@ -34,10 +34,27 @@ export async function signOut() {
   if (error) throw error;
 }
 
+/** Redirects the browser to Google, then back to this app once they
+ *  approve — Supabase handles the OAuth exchange and creates a session
+ *  automatically. AuthContext picks up the new session via its listener,
+ *  no further code needed after calling this. Requires Google to be
+ *  configured as a provider in Supabase (Authentication → Providers). */
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.origin },
+  });
+  if (error) throw error;
+}
+
 export async function getCurrentUser() {
+  // getSession() returns null gracefully when signed out; getUser() throws
+  // an AuthSessionMissingError instead, which was surfacing as a visible
+  // "Auth session missing!" error on every signed-out page instead of the
+  // intended sign-in redirect.
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
-  return data.user;
+  return data.session?.user ?? null;
 }
 
 /** Fires on sign-in, sign-out, and token refresh — use in App.jsx to track auth state app-wide. */

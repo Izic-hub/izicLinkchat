@@ -106,9 +106,9 @@ export default function SearchDiscovery() {
         .sd-group-row, .sd-person-row { display:flex; align-items:center; gap:11px; padding:9px 8px; border-radius:12px; }
         .sd-group-row:hover, .sd-person-row:hover { background:var(--bg); }
         .sd-g-avatar { width:42px; height:42px; border-radius:12px; background:var(--primary-soft); color:var(--primary);
-          font-family:'Space Grotesk'; font-weight:600; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+          font-family:'Space Grotesk'; font-weight:600; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
         .sd-p-avatar { width:42px; height:42px; border-radius:50%; background:var(--primary-soft); color:var(--primary);
-          font-family:'Space Grotesk'; font-weight:600; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+          font-family:'Space Grotesk'; font-weight:600; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
         .sd-item-text { flex:1; min-width:0; }
         .sd-item-text strong { font-size:13.5px; display:block; }
         .sd-item-text span { font-size:11.5px; color:var(--muted); }
@@ -170,7 +170,9 @@ export default function SearchDiscovery() {
             const joined = myGroupIds.has(g.id);
             return (
               <div className="sd-group-row" key={g.id} onClick={() => joined && navigate(`/groups/${g.id}`)} style={{ cursor: joined ? "pointer" : "default" }}>
-                <div className="sd-g-avatar">{initialsOf(g.name)}</div>
+                <div className="sd-g-avatar">
+                  {g.image_url ? <img src={g.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} /> : initialsOf(g.name)}
+                </div>
                 <div className="sd-item-text">
                   <strong>{g.name}</strong>
                   <span className="sd-item-desc">{g.description || "No description yet."}</span>
@@ -187,7 +189,9 @@ export default function SearchDiscovery() {
           })}
           {tab === "people" && peopleResults.map((p) => (
             <div className="sd-person-row" key={p.id}>
-              <div className="sd-p-avatar">{initialsOf(p.display_name || p.username)}</div>
+              <div className="sd-p-avatar">
+                {p.profile_image_url ? <img src={p.profile_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} /> : initialsOf(p.display_name || p.username)}
+              </div>
               <div className="sd-item-text">
                 <strong>{p.display_name || p.username}</strong>
                 <span>@{p.username}</span>

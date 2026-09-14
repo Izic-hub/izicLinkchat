@@ -9,6 +9,7 @@ import { getMyGroups } from "../lib/groups";
 import { signOut } from "../lib/auth";
 import { uploadImage } from "../lib/storage";
 import { useAuth } from "../lib/AuthContext";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 
 function initialsOf(name) {
   return (name || "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -124,9 +125,7 @@ export default function UserProfile() {
     <div className="pf-root">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
-        .pf-root { --ink:#14142B; --bg:#F3F4FA; --surface:#FFFFFF; --border:#E3E5F2; --primary:#4338CA;
-          --primary-soft:#EEF0FD; --accent:#16C7A6; --muted:#8A8FB0;
-          font-family:'Inter',sans-serif; color:var(--ink); background:var(--surface);
+        .pf-root { font-family:'Inter',sans-serif; color:var(--ink); background:var(--surface);
           border-radius:16px; border:1px solid var(--border); overflow:hidden; max-width:460px; }
         .pf-root * { box-sizing:border-box; }
         .pf-root button { font-family:inherit; cursor:pointer; }
@@ -257,6 +256,11 @@ export default function UserProfile() {
             </div>
           ));
         })()}
+      </div>
+
+      <div className="pf-privacy" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="pf-privacy-head">Appearance</div>
+        <ThemeSwitcher />
       </div>
 
       <div className="pf-privacy">

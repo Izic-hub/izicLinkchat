@@ -3,9 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Settings, Users, MessageSquare, Link2, ChevronLeft, Image as ImageIcon,
   Globe, Lock, Copy, RefreshCw, XCircle, QrCode, Check, Loader2,
-  Crown, Shield, UserMinus, Ban, AlertTriangle, UserPlus
+  Crown, Shield, UserMinus, Ban, AlertTriangle, UserPlus, Trash2
 } from "lucide-react";
-import { getGroupDetails, updateGroupSettings, regenerateInviteCode, inviteUserToGroup } from "../lib/groups";
+import { getGroupDetails, updateGroupSettings, regenerateInviteCode, inviteUserToGroup, deleteGroup } from "../lib/groups";
 import { getMembers, setMemberRole, setMemberStatus, removeMember } from "../lib/members";
 import { uploadImage } from "../lib/storage";
 import { useAuth } from "../lib/AuthContext";
@@ -29,13 +29,17 @@ function Toggle({ on, onChange, disabled }) {
   );
 }
 
-function SettingsTab({ groupId, group, onSaved }) {
+function SettingsTab({ groupId, group, onSaved, isHost }) {
+  const navigate = useNavigate();
   const [name, setName] = useState(group.name);
   const [desc, setDesc] = useState(group.description || "");
   const [privacy, setPrivacy] = useState(group.privacy);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [showDangerZone, setShowDangerZone] = useState(false);
 
   async function handleSave() {
     setSaving(true);
@@ -59,6 +63,17 @@ function SettingsTab({ groupId, group, onSaved }) {
       onSaved({ ...group, image_url: url });
     } finally {
       setUploadingPhoto(false);
+    }
+  }
+
+  async function handleDeleteGroup() {
+    setDeleting(true);
+    try {
+      await deleteGroup(groupId);
+      navigate("/profile");
+    } catch (err) {
+      setDeleting(false);
+      alert(err.message || "Couldn't delete the group.");
     }
   }
 
@@ -98,6 +113,29 @@ function SettingsTab({ groupId, group, onSaved }) {
       <button className="ad-btn-primary" onClick={handleSave} disabled={saving}>
         {saving ? <Loader2 size={14} className="ad-spin" /> : saved ? "Saved ✓" : "Save changes"}
       </button>
+
+      {isHost && (
+        <div className="ad-danger-zone">
+          {!showDangerZone ? (
+            <button className="ad-danger-toggle" onClick={() => setShowDangerZone(true)}>
+              <Trash2 size={13} />Delete this group
+            </button>
+          ) : (
+            <div className="ad-danger-box">
+              <div className="ad-danger-title"><AlertTriangle size={14} />Delete "{group.name}"?</div>
+              <p>This permanently deletes the group, every message, and removes all members. This can't be undone.</p>
+              <span className="ad-label">Type the group name to confirm</span>
+              <input className="ad-input" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder={group.name} />
+              <div className="ad-danger-actions">
+                <button className="ad-btn-ghost" onClick={() => { setShowDangerZone(false); setConfirmText(""); }}>Cancel</button>
+                <button className="ad-danger-confirm" disabled={confirmText !== group.name || deleting} onClick={handleDeleteGroup}>
+                  {deleting ? <Loader2 size={14} className="ad-spin" /> : <><Trash2 size={14} />Delete permanently</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -284,6 +322,7 @@ export default function GroupAdminDashboard() {
   const [tab, setTab] = useState("settings");
   const [group, setGroup] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [isHost, setIsHost] = useState(false);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
 
@@ -300,6 +339,7 @@ export default function GroupAdminDashboard() {
         setForbidden(true);
       } else {
         setGroup(groupData);
+        setIsHost(myRole === "host");
       }
       setLoading(false);
     }
@@ -363,6 +403,17 @@ export default function GroupAdminDashboard() {
         .ad-btn-ghost:hover { background:var(--bg); }
         .ad-btn-primary { align-self:flex-start; background:var(--primary); color:#fff; border:none; border-radius:10px;
           padding:10px 18px; font-size:13.5px; font-weight:600; min-width:130px; display:flex; align-items:center; justify-content:center; }
+        .ad-danger-zone { margin-top:12px; padding-top:16px; border-top:1px solid var(--border); }
+        .ad-danger-toggle { display:flex; align-items:center; gap:7px; color:var(--danger); font-size:12.5px; font-weight:600;
+          background:none; border:none; }
+        .ad-danger-box { border:1px solid var(--danger); background:#FDEAEA; border-radius:12px; padding:14px; display:flex;
+          flex-direction:column; gap:8px; }
+        .ad-danger-title { display:flex; align-items:center; gap:7px; font-weight:600; font-size:13.5px; color:var(--danger); }
+        .ad-danger-box p { font-size:12px; color:#7A2A22; margin:0 0 2px; line-height:1.45; }
+        .ad-danger-actions { display:flex; gap:8px; margin-top:4px; }
+        .ad-danger-confirm { flex:1; background:var(--danger); color:#fff; border:none; border-radius:9px; padding:10px;
+          font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .ad-danger-confirm:disabled { background:#E8B4B0; cursor:not-allowed; }
         .ad-privacy { display:flex; gap:8px; }
         .ad-priv-opt { flex:1; display:flex; align-items:center; justify-content:center; gap:7px; border:1.5px solid var(--border);
           border-radius:10px; padding:10px; font-size:13px; font-weight:600; background:#fff; color:var(--muted); }
@@ -421,7 +472,7 @@ export default function GroupAdminDashboard() {
 
       <div className="ad-main">
         <div className="ad-main-head">{TABS.find((t) => t.id === tab).label}</div>
-        {tab === "settings" && <SettingsTab groupId={groupId} group={group} onSaved={setGroup} />}
+        {tab === "settings" && <SettingsTab groupId={groupId} group={group} onSaved={setGroup} isHost={isHost} />}
         {tab === "members" && <MembersTab groupId={groupId} currentUserId={currentUserId} />}
         {tab === "chat" && <ChatControlsTab groupId={groupId} group={group} onSaved={setGroup} />}
         {tab === "invite" && <InviteTab groupId={groupId} group={group} onSaved={setGroup} />}

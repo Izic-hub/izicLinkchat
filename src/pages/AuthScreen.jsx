@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { MessagesSquare, Eye, EyeOff, ArrowRight, Chrome, Loader2 } from "lucide-react";
-import { signUp, signIn, signOut } from "../lib/auth";
+import { signUp, signIn, signOut, signInWithGoogle } from "../lib/auth";
 import { useAuth } from "../lib/AuthContext";
 
 export default function AuthScreen() {
@@ -14,6 +14,16 @@ export default function AuthScreen() {
   // hardcoded default — landing on /login should show the Log In tab.
   const [mode, setMode] = useState(location.pathname === "/login" ? "login" : "signup");
   const [switching, setSwitching] = useState(false);
+
+  async function handleGoogleSignIn() {
+    setFormError("");
+    try {
+      await signInWithGoogle();
+      // browser redirects to Google now — nothing else to do here
+    } catch (err) {
+      setFormError(err.message || "Couldn't start Google sign-in.");
+    }
+  }
 
   async function handleSwitchAccount() {
     setSwitching(true);
@@ -81,10 +91,9 @@ export default function AuthScreen() {
     <div className="au-root">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
-        .au-root { --ink:#14142B; --bg:#F3F4FA; --surface:#FFFFFF; --border:#E3E5F2; --primary:#4338CA;
-          --primary-soft:#EEF0FD; --accent:#16C7A6; --muted:#8A8FB0; --danger:#E5484D;
+        .au-root {
           font-family:'Inter',sans-serif; color:var(--ink);
-          background:radial-gradient(circle at 15% 0%, #EEF0FD 0%, var(--bg) 55%);
+          background:radial-gradient(circle at 15% 0%, var(--primary-soft) 0%, var(--bg) 55%);
           min-height:660px; display:flex; align-items:center; justify-content:center; padding:28px;
           border-radius:16px; }
         .au-root * { box-sizing:border-box; }
@@ -201,7 +210,7 @@ export default function AuthScreen() {
             {formError && <div className="au-form-error">{formError}</div>}
 
             <div className="au-divider">or</div>
-            <button className="au-google"><Chrome size={16} />Continue with Google</button>
+            <button className="au-google" onClick={handleGoogleSignIn}><Chrome size={16} />Continue with Google</button>
 
             <div className="au-switch">Already have an account? <b onClick={() => setMode("login")}>Log in</b></div>
           </>
@@ -238,7 +247,7 @@ export default function AuthScreen() {
             {formError && <div className="au-form-error">{formError}</div>}
 
             <div className="au-divider">or</div>
-            <button className="au-google"><Chrome size={16} />Continue with Google</button>
+            <button className="au-google" onClick={handleGoogleSignIn}><Chrome size={16} />Continue with Google</button>
 
             <div className="au-switch">New to LINKCHAT? <b onClick={() => setMode("signup")}>Create an account</b></div>
           </>

@@ -113,6 +113,14 @@ export async function regenerateInviteCode(groupId) {
   return code;
 }
 
+/** Permanently deletes a group. RLS restricts this to the host only.
+ *  Everything else (members, messages, invites, mutes) cascades via the
+ *  foreign keys already defined in schema.sql — nothing else to clean up. */
+export async function deleteGroup(groupId) {
+  const { error } = await supabase.from("groups").delete().eq("id", groupId);
+  if (error) throw error;
+}
+
 /** Directly invite one person by username — distinct from the shareable
  *  invite_code link. Only host/admin can do this (enforced by RLS via
  *  is_group_admin). The database trigger on group_invites creates the

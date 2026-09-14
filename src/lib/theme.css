@@ -1,0 +1,62 @@
+/* Global design tokens per theme. Loaded once in main.jsx, applies to the
+   whole app via the [data-theme] attribute ThemeContext sets on <html>.
+   Every screen's own <style> block should reference these with var(--x)
+   rather than redeclaring its own values — redeclaring on a page's root
+   class silently overrides these and breaks theme-switching for that page. */
+
+:root,
+[data-theme="light"] {
+  --ink: #14142B;
+  --bg: #F3F4FA;
+  --surface: #FFFFFF;
+  --border: #E3E5F2;
+  --primary: #4338CA;
+  --primary-soft: #EEF0FD;
+  --accent: #16C7A6;
+  --muted: #8A8FB0;
+  --danger: #E5484D;
+}
+
+[data-theme="dark"] {
+  --ink: #F3F4FA;
+  --bg: #0F0F1F;
+  --surface: #1A1A2E;
+  --border: #2A2A45;
+  --primary: #7C74FF;
+  --primary-soft: #25254A;
+  --accent: #2DE0C0;
+  --muted: #9497B8;
+  --danger: #FF6B6B;
+}
+
+/* Warm, coral-driven — distinct from the default indigo/mint pairing. */
+[data-theme="sunset"] {
+  --ink: #2B1810;
+  --bg: #FDF6F0;
+  --surface: #FFFFFF;
+  --border: #F1DFCE;
+  --primary: #F2703C;
+  --primary-soft: #FDE8DC;
+  --accent: #2DBFA6;
+  --muted: #A88B78;
+  --danger: #D8432E;
+}
+
+/* Cool teal + warm amber accent — the other "beautiful" option. */
+[data-theme="ocean"] {
+  --ink: #0B2530;
+  --bg: #EFF7F9;
+  --surface: #FFFFFF;
+  --border: #D6E7EA;
+  --primary: #0E7C86;
+  --primary-soft: #DFF1F2;
+  --accent: #F2A93B;
+  --muted: #6C8C92;
+  --danger: #D8432E;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  transition: background-color 0.2s ease;
+}

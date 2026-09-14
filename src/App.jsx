@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
+import { ThemeProvider } from "./lib/ThemeContext";
 
 import LandingPage from "./pages/LandingPage";
 import AuthScreen from "./pages/AuthScreen";
@@ -17,7 +18,7 @@ import EmptyErrorStates from "./pages/EmptyErrorStates";
 
 function Screen({ children }) {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "#F3F4FA" }}>
+    <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(8px, 4vw, 24px)", background: "var(--bg)" }}>
       {children}
     </div>
   );
@@ -41,6 +42,7 @@ function RequireAuth({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Screen><LandingPage /></Screen>} />
@@ -62,6 +64,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

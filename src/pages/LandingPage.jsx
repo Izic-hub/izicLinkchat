@@ -55,8 +55,7 @@ export default function LandingPage() {
     <div className="lp-root">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
-        .lp-root { --ink:#14142B; --bg:#F3F4FA; --surface:#FFFFFF; --border:#E3E5F2; --primary:#4338CA;
-          --primary-soft:#EEF0FD; --accent:#16C7A6; --muted:#8A8FB0;
+        .lp-root {
           font-family:'Inter',sans-serif; color:var(--ink); background:var(--surface);
           border-radius:16px; overflow:hidden; border:1px solid var(--border); }
         .lp-root * { box-sizing:border-box; }

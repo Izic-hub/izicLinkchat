@@ -144,7 +144,7 @@ export default function GroupMembersPage() {
         .mp-row:hover { background:var(--bg); }
         .mp-avatar { width:42px; height:42px; border-radius:12px; background:var(--primary-soft); color:var(--primary);
           font-family:'Space Grotesk'; font-weight:600; font-size:14px; display:flex; align-items:center;
-          justify-content:center; position:relative; flex-shrink:0; }
+          justify-content:center; position:relative; flex-shrink:0; overflow:hidden; }
         .mp-info { flex:1; min-width:0; }
         .mp-name-row { display:flex; align-items:center; gap:7px; }
         .mp-name-row strong { font-size:13.5px; }
@@ -187,7 +187,9 @@ export default function GroupMembersPage() {
           const isYou = m.profile.id === currentUserId;
           return (
             <div className="mp-row" key={m.id}>
-              <div className="mp-avatar">{initialsOf(displayName)}</div>
+              <div className="mp-avatar">
+                {m.profile.profile_image_url ? <img src={m.profile.profile_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} /> : initialsOf(displayName)}
+              </div>
               <div className="mp-info">
                 <div className="mp-name-row">
                   <strong>{displayName}</strong>
