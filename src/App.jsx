@@ -18,7 +18,7 @@ import EmptyErrorStates from "./pages/EmptyErrorStates";
 
 function Screen({ children }) {
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(8px, 4vw, 24px)", background: "var(--bg)" }}>
+    <div className="app-screen" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(8px, 4vw, 24px)", background: "var(--bg)" }}>
       {children}
     </div>
   );

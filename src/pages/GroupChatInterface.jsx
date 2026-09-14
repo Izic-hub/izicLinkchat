@@ -254,6 +254,7 @@ export default function GroupChatInterface() {
   const [showGroups, setShowGroups] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState("");
@@ -519,13 +520,20 @@ export default function GroupChatInterface() {
         .lc-dot.on { background:var(--accent); }
 
         .lc-center { flex:1; display:flex; flex-direction:column; min-width:0; }
-        .lc-header { height:64px; border-bottom:1px solid var(--border); display:flex; align-items:center;
-          gap:12px; padding:0 18px; flex-shrink:0; }
+        .lc-header { min-height:64px; border-bottom:1px solid var(--border); display:flex; align-items:center;
+          gap:12px; padding:10px 18px; flex-shrink:0; }
         .lc-header-text { flex:1; min-width:0; }
-        .lc-header-text strong { font-family:'Space Grotesk'; font-size:15.5px; display:block; }
+        .lc-header-text strong { font-family:'Space Grotesk'; font-size:15.5px; display:block;
+          white-space:normal; word-break:break-word; line-height:1.25; }
+        .lc-header-text .muted { display:block; margin-top:2px; }
         .lc-icon-btn { width:34px; height:34px; border-radius:9px; display:flex; align-items:center;
           justify-content:center; color:var(--muted); position:relative; flex-shrink:0; }
         .lc-icon-btn:hover { background:var(--bg); color:var(--ink); }
+        .lc-more-menu { position:absolute; top:40px; right:0; background:var(--surface); border:1px solid var(--border);
+          border-radius:12px; box-shadow:0 14px 32px -10px rgba(20,20,43,.3); padding:6px; z-index:12; min-width:190px; }
+        .lc-more-menu button { width:100%; display:flex; align-items:center; gap:9px; padding:9px 10px; font-size:13px;
+          border-radius:8px; text-align:left; color:var(--ink); }
+        .lc-more-menu button:hover { background:var(--bg); }
         .lc-messages { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px; }
         .lc-messages-status { flex:1; display:flex; align-items:center; justify-content:center; }
 
@@ -626,6 +634,13 @@ export default function GroupChatInterface() {
         @media (min-width: 821px) {
           .lc-groups.drawer, .lc-info.drawer { display:none; }
         }
+        @media (max-width: 640px) {
+          /* The desktop icon rail doesn't fit reliably on a phone-width
+             column — its job moves to the header's "..." menu instead
+             (see lc-more-menu), same pattern as WhatsApp/Telegram/Discord. */
+          .lc-rail { display:none; }
+          .lc-root { border-radius:0; border:none; }
+        }
       `}</style>
 
       <GroupRail onDrawerToggle={() => setShowGroups(true)} />
@@ -646,7 +661,18 @@ export default function GroupChatInterface() {
             <span className="muted">{onlineIds.length} online · {members.length} members</span>
           </div>
           <button className="lc-icon-btn" onClick={() => setShowInfo(true)} title="Group info"><Info size={18} /></button>
-          <button className="lc-icon-btn"><MoreVertical size={18} /></button>
+          <div style={{ position: "relative" }}>
+            <button className="lc-icon-btn" onClick={() => setShowMoreMenu((v) => !v)} title="More"><MoreVertical size={18} /></button>
+            {showMoreMenu && (
+              <div className="lc-more-menu">
+                <button onClick={() => { setShowMoreMenu(false); navigate("/search"); }}><Search size={15} />Search</button>
+                <button onClick={() => { setShowMoreMenu(false); navigate("/search"); }}><Compass size={15} />Discover</button>
+                <button onClick={() => { setShowMoreMenu(false); navigate("/create"); }}><Plus size={15} />Create group</button>
+                <button onClick={() => { setShowMoreMenu(false); navigate("/notifications"); }}><Bell size={15} />Notifications</button>
+                <button onClick={() => { setShowMoreMenu(false); navigate("/profile"); }}><Settings size={15} />Profile & settings</button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="lc-messages" ref={listRef}>

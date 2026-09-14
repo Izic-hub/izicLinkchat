@@ -60,3 +60,23 @@ body {
   background: var(--bg);
   transition: background-color 0.2s ease;
 }
+
+/* Full-bleed mobile layout — every page is wrapped in .app-screen (see
+   App.jsx's Screen component). On a phone, the centered-card-with-margins
+   look (fine on desktop) should instead go edge-to-edge like a native app.
+   This targets the page's own root div generically via the > selector, so
+   it applies to every page at once without editing each one individually. */
+@media (max-width: 640px) {
+  .app-screen {
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+  .app-screen > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+}
