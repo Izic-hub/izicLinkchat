@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { getMembers, setMemberRole, setMemberStatus, removeMember } from "../lib/members";
 import { useAuth } from "../lib/AuthContext";
+import MemberProfileModal from "../components/MemberProfileModal";
 
 const ROLE_ORDER = { host: 0, admin: 1, member: 2 };
 
@@ -52,6 +53,7 @@ export default function GroupMembersPage() {
   const [query, setQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [viewingUserId, setViewingUserId] = useState(null);
 
   useEffect(() => {
     if (!groupId) return;
@@ -79,7 +81,7 @@ export default function GroupMembersPage() {
     const displayName = member.profile.display_name || member.profile.username;
     try {
       if (action === "view") {
-        showToast(`${displayName}'s profile page isn't built yet.`);
+        setViewingUserId(member.profile.id);
       }
       if (action === "promote") {
         await setMemberRole(member.id, "admin");
@@ -215,6 +217,7 @@ export default function GroupMembersPage() {
       </div>
 
       {toast && <div className="mp-toast">{toast}</div>}
+      <MemberProfileModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
     </div>
   );
 }

@@ -56,7 +56,11 @@ export async function getGroupByInviteCode(code) {
 }
 
 /** Add the current user as a member of a group (the actual "Join Conversation" action). */
-export async function joinGroup({ groupId, userId }) {
+/** Add the current user as a member of a group (the actual "Join Conversation"
+ *  action). Public groups grant access immediately; private groups create a
+ *  pending request that needs host/admin approval instead — pass the group's
+ *  privacy in so this doesn't need an extra round-trip to look it up. */
+export async function joinGroup({ groupId, userId, privacy }) {
   // Check for an existing row first — someone can only ever have one
   // group_members row per group (unique constraint), so re-joining after
   // being banned must be blocked explicitly rather than silently allowed
@@ -71,17 +75,24 @@ export async function joinGroup({ groupId, userId }) {
   if (existing?.status === "banned") {
     throw new Error("You've been banned from this group.");
   }
-  if (existing) {
-    return; // already a member (active/muted) — nothing to do
+  if (existing?.status === "pending") {
+    return { status: "pending" }; // already requested — nothing new to do
   }
+  if (existing) {
+    return { status: "active" }; // already an active/muted member
+  }
+
+  const initialStatus = privacy === "private" ? "pending" : "active";
 
   const { error } = await supabase.from("group_members").insert({
     group_id: groupId,
     user_id: userId,
     role: "member",
-    status: "active",
+    status: initialStatus,
   });
   if (error) throw error;
+
+  return { status: initialStatus };
 }
 
 /** Groups the current user belongs to, for the sidebar list and Landing "My Groups". */

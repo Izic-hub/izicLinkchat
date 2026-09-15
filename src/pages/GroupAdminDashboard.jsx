@@ -3,10 +3,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Settings, Users, MessageSquare, Link2, ChevronLeft, Image as ImageIcon,
   Globe, Lock, Copy, RefreshCw, XCircle, QrCode, Check, Loader2,
-  Crown, Shield, UserMinus, Ban, AlertTriangle, UserPlus, Trash2
+  Crown, Shield, UserMinus, Ban, AlertTriangle, UserPlus, Trash2, X, User
 } from "lucide-react";
 import { getGroupDetails, updateGroupSettings, regenerateInviteCode, inviteUserToGroup, deleteGroup } from "../lib/groups";
-import { getMembers, setMemberRole, setMemberStatus, removeMember } from "../lib/members";
+import {
+  getMembers, setMemberRole, setMemberStatus, removeMember,
+  getPendingMembers, getBannedMembers, approveMember, denyMember, unbanMember
+} from "../lib/members";
 import { uploadImage } from "../lib/storage";
 import { useAuth } from "../lib/AuthContext";
 
@@ -148,13 +151,22 @@ function RoleBadge({ role }) {
 
 function MembersTab({ groupId, currentUserId }) {
   const [members, setMembers] = useState([]);
+  const [pending, setPending] = useState([]);
+  const [banned, setBanned] = useState([]);
+  const [showBanned, setShowBanned] = useState(false);
   const [loading, setLoading] = useState(true);
   const [inviteUsername, setInviteUsername] = useState("");
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState("");
 
+  function reloadAll() {
+    return Promise.all([getMembers(groupId), getPendingMembers(groupId), getBannedMembers(groupId)]).then(
+      ([m, p, b]) => { setMembers(m); setPending(p); setBanned(b); }
+    );
+  }
+
   useEffect(() => {
-    getMembers(groupId).then(setMembers).finally(() => setLoading(false));
+    reloadAll().finally(() => setLoading(false));
   }, [groupId]);
 
   async function handleInvite() {
@@ -185,6 +197,21 @@ function MembersTab({ groupId, currentUserId }) {
   async function ban(m) {
     await setMemberStatus(m.id, "banned");
     setMembers((prev) => prev.filter((row) => row.id !== m.id));
+    setBanned((prev) => [...prev, { ...m, status: "banned" }]);
+  }
+  async function handleUnban(m) {
+    await unbanMember(m.id);
+    setBanned((prev) => prev.filter((row) => row.id !== m.id));
+    setMembers((prev) => [...prev, { ...m, status: "active", role: "member" }]);
+  }
+  async function handleApprove(m) {
+    await approveMember(m.id);
+    setPending((prev) => prev.filter((row) => row.id !== m.id));
+    setMembers((prev) => [...prev, { ...m, status: "active" }]);
+  }
+  async function handleDeny(m) {
+    await denyMember(m.id);
+    setPending((prev) => prev.filter((row) => row.id !== m.id));
   }
 
   if (loading) return <div className="ad-panel"><Loader2 size={18} className="ad-spin" /></div>;
@@ -207,6 +234,29 @@ function MembersTab({ groupId, currentUserId }) {
         </div>
         {inviteMsg && <div className="ad-invite-msg">{inviteMsg}</div>}
       </div>
+
+      {pending.length > 0 && (
+        <div className="ad-pending-section">
+          <div className="ad-label" style={{ color: "var(--primary)" }}>Pending requests ({pending.length})</div>
+          {pending.map((m) => {
+            const name = m.profile.display_name || m.profile.username;
+            return (
+              <div className="ad-member-row" key={m.id}>
+                <div className="ad-avatar-sm">{initialsOf(name)}</div>
+                <div className="ad-member-text">
+                  <strong>{name}</strong>
+                  <span className="ad-muted">@{m.profile.username}</span>
+                </div>
+                <div className="ad-member-actions">
+                  <button className="ad-approve-btn" title="Approve" onClick={() => handleApprove(m)}><Check size={14} /></button>
+                  <button className="ad-icon-btn danger" title="Deny" onClick={() => handleDeny(m)}><X size={14} /></button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="ad-label" style={{ marginBottom: 10 }}>{members.length} members</div>
       {members.map((m) => {
         const name = m.profile.display_name || m.profile.username;
@@ -227,6 +277,28 @@ function MembersTab({ groupId, currentUserId }) {
           </div>
         );
       })}
+
+      <button className="ad-banned-toggle" onClick={() => setShowBanned((v) => !v)}>
+        <Ban size={12} />{showBanned ? "Hide" : "Show"} banned members ({banned.length})
+      </button>
+      {showBanned && (
+        <div className="ad-pending-section">
+          {banned.length === 0 && <div className="ad-muted" style={{ padding: "6px 0" }}>No one is banned from this group.</div>}
+          {banned.map((m) => {
+            const name = m.profile.display_name || m.profile.username;
+            return (
+              <div className="ad-member-row" key={m.id}>
+                <div className="ad-avatar-sm">{initialsOf(name)}</div>
+                <div className="ad-member-text">
+                  <strong>{name}</strong>
+                  <span className="ad-muted">@{m.profile.username}</span>
+                </div>
+                <button className="ad-btn-ghost" onClick={() => handleUnban(m)}>Unban</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -364,11 +436,10 @@ export default function GroupAdminDashboard() {
     <div className="ad-root">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
-        .ad-root { --ink:#14142B; --bg:#F3F4FA; --surface:#FFFFFF; --border:#E3E5F2; --primary:#4338CA;
-          --primary-soft:#EEF0FD; --accent:#16C7A6; --muted:#8A8FB0; --danger:#E5484D;
+        .ad-root {
           font-family:'Inter',sans-serif; color:var(--ink); background:var(--surface);
           border-radius:16px; border:1px solid var(--border); overflow:hidden; display:flex;
-          max-width:680px; min-height:560px; }
+          max-width:680px; min-height:560px; width:100%; }
         .ad-root * { box-sizing:border-box; }
         .ad-root button { font-family:inherit; cursor:pointer; }
         .ad-root input, .ad-root textarea { font-family:inherit; outline:none; }
@@ -380,14 +451,23 @@ export default function GroupAdminDashboard() {
 
         .ad-nav { width:190px; background:var(--bg); border-right:1px solid var(--border); padding:16px 10px; flex-shrink:0; }
         .ad-nav-head { display:flex; align-items:center; gap:8px; padding:6px 8px 16px; font-family:'Space Grotesk';
-          font-weight:600; font-size:14px; }
+          font-weight:600; font-size:14px; flex-shrink:0; }
         .ad-nav-item { width:100%; display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:10px;
-          font-size:13px; font-weight:500; color:#565A78; background:none; border:none; text-align:left; margin-bottom:2px; }
-        .ad-nav-item:hover { background:#fff; }
+          font-size:13px; font-weight:500; color:var(--muted); background:none; border:none; text-align:left; margin-bottom:2px; }
+        .ad-nav-item:hover { background:var(--surface); }
         .ad-nav-item.active { background:var(--primary); color:#fff; }
 
-        .ad-main { flex:1; padding:24px 26px; overflow-y:auto; }
+        .ad-main { flex:1; padding:24px 26px; overflow-y:auto; min-width:0; }
         .ad-main-head { font-family:'Space Grotesk'; font-size:17px; font-weight:600; margin-bottom:18px; }
+
+        @media (max-width: 640px) {
+          .ad-root { flex-direction:column; max-width:100%; min-height:0; height:100%; }
+          .ad-nav { width:100%; display:flex; align-items:center; gap:4px; padding:10px 12px;
+            border-right:none; border-bottom:1px solid var(--border); overflow-x:auto; flex-shrink:0; }
+          .ad-nav-head { padding:0 8px 0 0; flex-shrink:0; }
+          .ad-nav-item { width:auto; white-space:nowrap; margin-bottom:0; flex-shrink:0; }
+          .ad-main { padding:16px; }
+        }
 
         .ad-panel { display:flex; flex-direction:column; gap:16px; }
         .ad-field { display:flex; flex-direction:column; gap:8px; }
@@ -429,6 +509,12 @@ export default function GroupAdminDashboard() {
         .ad-badge.host { background:#FFF1D6; color:#946200; }
         .ad-badge.admin { background:var(--primary-soft); color:var(--primary); }
         .ad-member-actions { display:flex; gap:4px; }
+        .ad-pending-section { background:var(--bg); border-radius:12px; padding:8px 10px; margin-bottom:14px; }
+        .ad-approve-btn { width:30px; height:30px; border-radius:8px; background:var(--accent); color:#fff;
+          display:flex; align-items:center; justify-content:center; border:none; }
+        .ad-banned-toggle { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);
+          background:none; border:none; margin-top:10px; padding:4px 0; }
+        .ad-banned-toggle:hover { color:var(--danger); }
         .ad-icon-btn { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
           color:var(--muted); border:none; background:none; }
         .ad-icon-btn:hover { background:var(--bg); color:var(--ink); }

@@ -1,16 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MessagesSquare, ArrowRight, Link2, Users, AtSign, Phone, Megaphone,
   Image as ImageIcon, Shield, Lock, Check
 } from "lucide-react";
-
-const ARRIVALS = [
-  { initials: "AB", name: "Aisha" },
-  { initials: "CO", name: "Chinedu" },
-  { initials: "FA", name: "Femi" },
-  { initials: "NE", name: "Ngozi" },
-];
 
 const FEATURES = [
   { icon: Users, title: "Create groups instantly", text: "No setup wizard. Name it, set who can join, done." },
@@ -30,7 +23,6 @@ const STEPS = [
 ];
 
 export default function LandingPage() {
-  const [arrived, setArrived] = useState([]);
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [joinValue, setJoinValue] = useState("");
   const navigate = useNavigate();
@@ -44,12 +36,6 @@ export default function LandingPage() {
     const code = raw.includes("/join/") ? raw.split("/join/").pop().split(/[?#]/)[0] : raw;
     navigate(`/join/${code}`);
   }
-
-  useEffect(() => {
-    ARRIVALS.forEach((p, i) => {
-      setTimeout(() => setArrived((prev) => [...prev, p]), 500 + i * 550);
-    });
-  }, []);
 
   return (
     <div className="lp-root">
@@ -69,10 +55,16 @@ export default function LandingPage() {
         .lp-brand-icon { width:30px; height:30px; border-radius:9px; background:var(--primary); color:#fff;
           display:flex; align-items:center; justify-content:center; }
         .lp-nav-actions { display:flex; align-items:center; gap:14px; }
-        .lp-nav-signin { background:none; border:none; color:#464A68; font-size:13.5px; font-weight:600; }
+        .lp-nav-signin { background:none; border:none; color:var(--muted); font-size:13.5px; font-weight:600; }
         .lp-nav-signin:hover { color:var(--ink); }
-        .lp-nav-cta { background:var(--ink); color:#fff; border:none; border-radius:9px; padding:9px 18px;
+        .lp-nav-cta { background:var(--ink); color:var(--surface); border:none; border-radius:9px; padding:9px 18px;
           font-size:13.5px; font-weight:600; }
+
+        @media (max-width: 640px) {
+          .lp-nav { flex-direction:column; gap:12px; padding:16px 20px; align-items:stretch; }
+          .lp-nav-actions { justify-content:center; }
+          .lp-brand { justify-content:center; }
+        }
 
         /* hero */
         .lp-hero { display:grid; grid-template-columns:1.05fr 0.95fr; gap:40px; padding:64px 40px 70px;
@@ -98,24 +90,17 @@ export default function LandingPage() {
         .lp-trust span { display:flex; align-items:center; gap:6px; }
 
         /* hero mockup */
-        .lp-mock { background:var(--bg); border-radius:18px; padding:18px; border:1px solid var(--border); }
-        .lp-mock-card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 12px 30px -14px rgba(20,20,43,.18); }
-        .lp-mock-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-        .lp-mock-avatar { width:38px; height:38px; border-radius:11px; background:var(--primary); color:#fff;
-          font-family:'Space Grotesk'; font-weight:600; display:flex; align-items:center; justify-content:center; }
-        .lp-mock-head strong { display:block; font-size:13.5px; }
-        .lp-mock-head span { font-size:11.5px; color:var(--muted); }
-        .lp-mock-link { background:var(--bg); border:1px dashed #C7C9DA; border-radius:9px; padding:9px 11px;
-          font-size:11.5px; font-family:monospace; margin-bottom:14px; }
-        .lp-mock-row { display:flex; align-items:center; gap:9px; padding:7px 0; opacity:0; transform:translateX(-8px);
-          animation:lp-arrive .5s ease forwards; }
-        @keyframes lp-arrive { to { opacity:1; transform:translateX(0); } }
-        .lp-mock-row .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); margin-left:auto; }
-        .lp-mock-avatar-sm { width:28px; height:28px; border-radius:9px; background:var(--primary-soft);
-          color:var(--primary); font-family:'Space Grotesk'; font-weight:600; font-size:11px; display:flex;
-          align-items:center; justify-content:center; }
-        .lp-mock-name { font-size:13px; font-weight:500; }
-        .lp-mock-joined { font-size:10.5px; color:var(--accent); font-weight:600; margin-left:auto; }
+        .lp-illustration { padding:10px; }
+        .lp-illustration svg { width:100%; height:auto; display:block; }
+        .lp-illus-float-slow, .lp-illus-float-fast, .lp-illus-float-med, .lp-illus-float-slow2, .lp-illus-float-fast2 {
+          transform-origin:center; }
+        .lp-illus-float-slow { animation:lp-float-a 4.5s ease-in-out infinite; }
+        .lp-illus-float-fast { animation:lp-float-b 3.2s ease-in-out infinite; }
+        .lp-illus-float-med { animation:lp-float-a 3.8s ease-in-out infinite; animation-delay:.3s; }
+        .lp-illus-float-slow2 { animation:lp-float-b 4.2s ease-in-out infinite; animation-delay:.6s; }
+        .lp-illus-float-fast2 { animation:lp-float-a 3s ease-in-out infinite; animation-delay:.9s; }
+        @keyframes lp-float-a { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+        @keyframes lp-float-b { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(7px); } }
 
         /* features */
         .lp-section { padding:60px 40px; }
@@ -150,6 +135,10 @@ export default function LandingPage() {
           .lp-section { padding:44px 22px; }
           .lp-steps-wrap { margin:0 22px; padding:32px 24px; }
           h1.lp-headline { font-size:32px; }
+        }
+        @media (max-width: 560px) {
+          .lp-nav { justify-content:center; padding:16px 18px; }
+          .lp-nav-actions { display:none; }
         }
       `}</style>
 
@@ -188,22 +177,39 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="lp-mock">
-          <div className="lp-mock-card">
-            <div className="lp-mock-head">
-              <div className="lp-mock-avatar">TL</div>
-              <div><strong>Tech Learners Hub</strong><span>Created just now</span></div>
-            </div>
-            <div className="lp-mock-link">linkchat.app/join/ABX72K</div>
-            {arrived.map((p, i) => (
-              <div className="lp-mock-row" key={p.initials} style={{ animationDelay: `${i * 0.05}s` }}>
-                <div className="lp-mock-avatar-sm">{p.initials}</div>
-                <span className="lp-mock-name">{p.name}</span>
-                <span className="lp-mock-joined">joined</span>
-                <span className="dot" />
-              </div>
-            ))}
-          </div>
+        <div className="lp-illustration">
+          <svg viewBox="0 0 420 380" xmlns="http://www.w3.org/2000/svg">
+            <path d="M55,195 C48,95 145,25 235,42 C328,60 385,135 368,228 C351,320 250,365 155,338 C62,312 62,290 55,195 Z" fill="var(--primary-soft)" />
+
+            <g className="lp-illus-float-slow">
+              <circle cx="118" cy="262" r="48" fill="var(--primary)" />
+              <circle cx="118" cy="246" r="17" fill="var(--surface)" opacity="0.95" />
+              <path d="M86,300 Q118,270 150,300 L150,318 L86,318 Z" fill="var(--surface)" opacity="0.95" />
+            </g>
+
+            <g className="lp-illus-float-fast">
+              <circle cx="298" cy="118" r="38" fill="var(--accent)" />
+              <circle cx="298" cy="105" r="13" fill="var(--surface)" opacity="0.95" />
+              <path d="M270,143 Q298,120 326,143 L326,156 L270,156 Z" fill="var(--surface)" opacity="0.95" />
+            </g>
+
+            <g className="lp-illus-float-med">
+              <rect x="150" y="188" width="98" height="46" rx="16" fill="var(--surface)" stroke="var(--border)" />
+              <circle cx="172" cy="211" r="4.5" fill="var(--primary)" />
+              <circle cx="194" cy="211" r="4.5" fill="var(--primary)" />
+              <circle cx="216" cy="211" r="4.5" fill="var(--primary)" />
+            </g>
+
+            <g className="lp-illus-float-slow2">
+              <rect x="208" y="88" width="104" height="42" rx="16" fill="var(--primary)" />
+              <line x1="228" y1="109" x2="292" y2="109" stroke="var(--surface)" strokeWidth="4" strokeLinecap="round" opacity="0.85" />
+            </g>
+
+            <g className="lp-illus-float-fast2">
+              <circle cx="340" cy="224" r="19" fill="var(--surface)" stroke="var(--border)" />
+              <path d="M340,232 C331,224 331,215 337,215 C339.5,215 340,217 340,217 C340,217 340.5,215 343,215 C349,215 349,224 340,232 Z" fill="#EF4444" />
+            </g>
+          </svg>
         </div>
       </section>
 

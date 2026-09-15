@@ -78,5 +78,7 @@ body {
     max-height: 100dvh !important;
     border-radius: 0 !important;
     border: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
   }
 }

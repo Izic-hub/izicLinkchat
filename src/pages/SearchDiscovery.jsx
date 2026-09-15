@@ -50,7 +50,7 @@ export default function SearchDiscovery() {
   async function handleJoin(group) {
     setJoiningId(group.id);
     try {
-      await joinGroup({ groupId: group.id, userId: user.id });
+      await joinGroup({ groupId: group.id, userId: user.id, privacy: group.privacy });
       setMyGroupIds((prev) => new Set([...prev, group.id]));
     } catch (err) {
       setToast(err.message || "Couldn't join that group.");

@@ -14,7 +14,7 @@ export default function JoinGroupFlow() {
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const [step, setStep] = useState("preview"); // preview | joined
+  const [step, setStep] = useState("preview"); // preview | joined | pending
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
   const [switching, setSwitching] = useState(false);
@@ -46,12 +46,12 @@ export default function JoinGroupFlow() {
         navigate(`/signup?redirect=/join/${code}`);
         return;
       }
-      await joinGroup({ groupId: group.id, userId: user.id });
-      setStep("joined");
+      await joinGroup({ groupId: group.id, userId: user.id, privacy: group.privacy });
+      setStep(group.privacy === "private" ? "pending" : "joined");
     } catch (err) {
-      // Unique constraint violation = already a member, which is fine — just continue.
+      // Unique constraint violation = already a member/requested, which is fine.
       if (err.code === "23505") {
-        setStep("joined");
+        setStep(group.privacy === "private" ? "pending" : "joined");
       } else {
         setJoinError(err.message || "Couldn't join this group — try again.");
       }
@@ -146,6 +146,15 @@ export default function JoinGroupFlow() {
             <h2 className="jg-title">You're in!</h2>
             <p className="jg-joined-sub">Welcome to {group.name}.</p>
             <button className="jg-enter-btn" onClick={() => navigate(`/groups/${group.id}`)}>Enter Group Chat <ArrowRight size={16} /></button>
+          </>
+        )}
+
+        {step === "pending" && group && (
+          <>
+            <div className="jg-joined-icon" style={{ background: "var(--muted)" }}><Lock size={22} /></div>
+            <h2 className="jg-title">Request sent</h2>
+            <p className="jg-joined-sub">{group.name} is a private group — the host or an admin needs to approve your request before you can join. You'll get a notification once they do.</p>
+            <button className="jg-enter-btn" onClick={() => navigate("/profile")}>Back to your profile</button>
           </>
         )}
       </div>

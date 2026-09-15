@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, Lock, Globe, Image as ImageIcon, Check, Copy, Share2,
-  QrCode, ArrowRight, ChevronLeft, MessagesSquare, Loader2, AlertCircle
+  QrCode, ArrowRight, ChevronLeft, MessagesSquare, Loader2, AlertCircle, ChevronDown
 } from "lucide-react";
 import { createGroup } from "../lib/groups";
 import { useAuth } from "../lib/AuthContext";
 
-const CATEGORIES = ["Study & Learning", "Work & Career", "Community", "Sports & Fitness", "Hobby & Interest", "Family & Friends"];
+const CATEGORIES = ["Study & Learning", "Work & Career", "Community", "Sports & Fitness", "Hobby & Interest", "Family & Friends", "Other"];
 
 // Minimal deterministic QR-style placeholder grid (visual only — swap for a real
 // QR lib like `qrcode` when wiring the invite link to a live URL).
@@ -39,6 +39,7 @@ export default function CreateGroupFlow() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
+  const [customCategory, setCustomCategory] = useState("");
   const [privacy, setPrivacy] = useState("public");
   const [copied, setCopied] = useState(false);
   const [group, setGroup] = useState(null);
@@ -64,7 +65,7 @@ export default function CreateGroupFlow() {
       const created = await createGroup({
         name: name.trim(),
         description: desc.trim() || null,
-        category,
+        category: category === "Other" ? (customCategory.trim() || "Other") : category,
         privacy,
         imageFile,
         userId: user.id,
@@ -110,6 +111,9 @@ export default function CreateGroupFlow() {
         .cg-input, .cg-textarea, .cg-select { width:100%; border:1px solid var(--border); background:var(--bg);
           border-radius:10px; padding:11px 13px; font-size:14px; font-family:inherit; color:var(--ink); outline:none; }
         .cg-input:focus, .cg-textarea:focus, .cg-select:focus { border-color:var(--primary); background:#fff; }
+        .cg-select-wrap { position:relative; }
+        .cg-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; padding-right:36px; cursor:pointer; }
+        .cg-select-arrow { position:absolute; right:12px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--muted); }
         .cg-textarea { resize:vertical; min-height:70px; }
         .cg-upload { display:flex; align-items:center; gap:12px; }
         .cg-upload-box { width:56px; height:56px; border-radius:14px; border:1.5px dashed #C7C9DA; background:var(--bg);
@@ -190,9 +194,21 @@ export default function CreateGroupFlow() {
 
             <div className="cg-field">
               <span className="cg-label">Category</span>
-              <select className="cg-select" value={category} onChange={(e) => setCategory(e.target.value)}>
-                {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-              </select>
+              <div className="cg-select-wrap">
+                <select className="cg-select" value={category} onChange={(e) => setCategory(e.target.value)}>
+                  {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                </select>
+                <ChevronDown size={15} className="cg-select-arrow" />
+              </div>
+              {category === "Other" && (
+                <input
+                  className="cg-input"
+                  style={{ marginTop: 8 }}
+                  placeholder="Describe your group's category"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                />
+              )}
             </div>
 
             <div className="cg-field">

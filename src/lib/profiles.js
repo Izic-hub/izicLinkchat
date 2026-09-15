@@ -24,6 +24,21 @@ export async function updateProfile(userId, updates) {
   if (error) throw error;
 }
 
+/** Read-only view of ANY user's profile — used for "View profile" from a
+ *  member list. Deliberately excludes phone_number (which is revoked at
+ *  the database level for everyone but the owner anyway, see
+ *  fix_phone_privacy.sql) and the privacy-setting booleans, which are
+ *  nobody else's business. */
+export async function getPublicProfile(userId) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, profile_image_url, bio, created_at")
+    .eq("id", userId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 /** Groups & people search for the Search & Discovery screen. */
 export async function searchGroups(query) {
   const { data, error } = await supabase
