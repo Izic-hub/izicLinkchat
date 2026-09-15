@@ -24,7 +24,7 @@ const STEPS = [
 
 export default function LandingPage() {
   const [showJoinInput, setShowJoinInput] = useState(false);
-  const [joinValue, setJoinValue] = useState("");
+  const [joinValue, setJoinValue] = useState ("");
   const navigate = useNavigate();
 
   function handleJoinSubmit(e) {
