@@ -16,15 +16,19 @@ export const getCurrentUser = async () => {
 };
 
 /**
- * Handles signing out and clearing the local token session safely.
+ * 🔥 FIXED NAME: Handles signing out and clearing the local token session safely.
+ * Matches the 'signOut' import expected by your AuthScreen file.
  */
-export const signOutUser = async () => {
+export const signOut = async () => {
   const { error } = await supabase.auth.signOut();
   if (error) console.error('Error signing out:', error.message);
 };
 
+// Also export it as signOutUser just in case another component uses the old name
+export const signOutUser = signOut;
+
 /**
- *  THE MISSING PIECE: Handles Google OAuth Sign-In
+ * Handles Google OAuth Sign-In
  * Triggers the redirect link to log in via a Google Account.
  */
 export const signInWithGoogle = async () => {
@@ -32,7 +36,6 @@ export const signInWithGoogle = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // This dynamically forces users back to whatever live page they started on
         redirectTo: window.location.origin, 
       },
     });
