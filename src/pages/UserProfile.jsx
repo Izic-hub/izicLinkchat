@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, Camera, Users, PlusCircle, Eye, EyeOff, Phone, AtSign,
-  Circle, Pencil, Check, Loader2, LogOut
+  Circle, Pencil, Check, Loader2, LogOut, ShieldCheck
 } from "lucide-react";
 import { getProfile, updateProfile } from "../lib/profiles";
 import { getMyGroups } from "../lib/groups";
@@ -43,7 +43,7 @@ function visToBool(v) { return v !== "nobody"; }
 
 export default function UserProfile() {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth(); // guaranteed non-null — this route is wrapped in RequireAuth
+  const { user: authUser, isPlatformAdmin } = useAuth(); // guaranteed non-null — this route is wrapped in RequireAuth
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
@@ -185,7 +185,10 @@ export default function UserProfile() {
         .pf-priv-text strong { font-size:12.5px; display:block; }
         .pf-priv-text span { font-size:11px; color:var(--muted); }
         .pf-select { border:1px solid var(--border); background:var(--bg); border-radius:8px; padding:5px 8px; font-size:11.5px; }
-        .pf-logout-wrap { padding:4px 18px 20px; }
+        .pf-logout-wrap { padding:4px 18px 20px; display:flex; flex-direction:column; gap:8px; }
+        .pf-superadmin-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:7px;
+          border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary); border-radius:10px;
+          padding:10px; font-size:13px; font-weight:600; }
         .pf-logout-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:7px;
           border:1px solid var(--border); background:#fff; color:#E5484D; border-radius:10px; padding:10px;
           font-size:13px; font-weight:600; }
@@ -272,6 +275,11 @@ export default function UserProfile() {
       </div>
 
       <div className="pf-logout-wrap">
+        {isPlatformAdmin && (
+          <button className="pf-superadmin-btn" onClick={() => navigate("/superadmin")}>
+            <ShieldCheck size={14} />Platform Admin
+          </button>
+        )}
         <button className="pf-logout-btn" onClick={async () => { await signOut(); navigate("/"); }}>
           <LogOut size={14} />Log out
         </button>

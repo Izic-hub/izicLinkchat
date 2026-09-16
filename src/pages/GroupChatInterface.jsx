@@ -7,7 +7,7 @@ import {
   Trash2, Check, Square, File as FileIcon, Download
 } from "lucide-react";
 import { getProfile } from "../lib/profiles";
-import { getMyGroups, getGroupDetails } from "../lib/groups";
+import { getMyGroups, getGroupDetails, leaveGroup } from "../lib/groups";
 import { getMembers } from "../lib/members";
 import {
   getMessages, sendMessage, sendMediaMessage, editMessage, deleteMessage,
@@ -121,7 +121,7 @@ function MediaContent({ msg }) {
   return null;
 }
 
-function Message({ msg, isOwn, resolveSender, isEditing, editDraft, onEditDraftChange, onStartEdit, onSaveEdit, onCancelEdit, onDelete }) {
+function Message({ msg, isOwn, canModerate, resolveSender, isEditing, editDraft, onEditDraftChange, onStartEdit, onSaveEdit, onCancelEdit, onDelete }) {
   const sender = resolveSender(msg);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useClickOutside(() => setMenuOpen(false));
@@ -160,16 +160,13 @@ function Message({ msg, isOwn, resolveSender, isEditing, editDraft, onEditDraftC
           </div>
         ) : (
           <div className="lc-msg-wrap">
-            {isOwn && !isMedia && (
-              <button className="lc-msg-menu-btn" onClick={() => setMenuOpen((v) => !v)}><MoreVertical size={13} /></button>
-            )}
-            {isOwn && isMedia && (
+            {(isOwn || canModerate) && (
               <button className="lc-msg-menu-btn" onClick={() => setMenuOpen((v) => !v)}><MoreVertical size={13} /></button>
             )}
             {menuOpen && (
               <div className="lc-msg-menu" ref={menuRef}>
-                {!isMedia && <button onClick={() => { setMenuOpen(false); onStartEdit(); }}><Pencil size={12} />Edit</button>}
-                <button className="danger" onClick={() => { setMenuOpen(false); onDelete(); }}><Trash2 size={12} />Delete</button>
+                {isOwn && !isMedia && <button onClick={() => { setMenuOpen(false); onStartEdit(); }}><Pencil size={12} />Edit</button>}
+                <button className="danger" onClick={() => { setMenuOpen(false); onDelete(); }}><Trash2 size={12} />{isOwn ? "Delete" : "Delete (admin)"}</button>
               </div>
             )}
             <div className={`lc-bubble ${isOwn ? "own" : ""} ${isMedia ? "media" : ""}`}>
@@ -199,9 +196,23 @@ function TypingIndicator({ name, initials }) {
   );
 }
 
-function InfoPanel({ isDrawer, onClose, groupId, groupDetails, members, onlineIds }) {
+function InfoPanel({ isDrawer, onClose, groupId, groupDetails, members, onlineIds, currentUserId, myRole }) {
   const navigate = useNavigate();
+  const [leaving, setLeaving] = useState(false);
   const inviteLink = groupDetails ? `${window.location.host}/join/${groupDetails.invite_code}` : "";
+
+  async function handleLeave() {
+    if (!window.confirm(`Leave ${groupDetails?.name || "this group"}? You'll need a new invite to rejoin.`)) return;
+    setLeaving(true);
+    try {
+      await leaveGroup(groupId, currentUserId);
+      navigate("/profile");
+    } catch (err) {
+      setLeaving(false);
+      alert(err.message || "Couldn't leave the group.");
+    }
+  }
+
   return (
     <aside className={`lc-info ${isDrawer ? "drawer" : ""}`}>
       <div className="lc-groups-head">
@@ -230,7 +241,16 @@ function InfoPanel({ isDrawer, onClose, groupId, groupDetails, members, onlineId
           <div className="lc-info-label">Invite link</div>
           <div className="lc-invite-chip">{inviteLink || "…"}</div>
         </div>
-        <button className="lc-info-admin-btn" onClick={() => navigate(`/groups/${groupId}/admin`)}>Open admin dashboard</button>
+        {(myRole === "host" || myRole === "admin") && (
+          <button className="lc-info-admin-btn" onClick={() => navigate(`/groups/${groupId}/admin`)}>Open admin dashboard</button>
+        )}
+        {myRole === "host" ? (
+          <div className="lc-leave-note">You're the host — delete the group or promote another host from the admin dashboard instead of leaving.</div>
+        ) : (
+          <button className="lc-leave-btn" onClick={handleLeave} disabled={leaving}>
+            {leaving ? "Leaving…" : "Leave group"}
+          </button>
+        )}
       </div>
     </aside>
   );
@@ -477,6 +497,8 @@ export default function GroupChatInterface() {
   }
 
   const typingSender = typingUserId ? resolveSender({ sender_id: typingUserId }) : null;
+  const myRole = members.find((m) => m.profile.id === currentUser?.id)?.role;
+  const canModerate = myRole === "host" || myRole === "admin";
 
   return (
     <div className="lc-root">
@@ -601,8 +623,10 @@ export default function GroupChatInterface() {
           resize:none; max-height:120px; line-height:1.4; border:1px solid var(--border); border-radius:18px;
           background:var(--bg); color:var(--ink); overflow-y:auto; }
         .lc-composer-textarea:focus { outline:none; border-color:var(--primary); }
-        .lc-send { width:36px; height:36px; border-radius:10px; background:var(--primary); color:#fff;
-          display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .lc-send { width:0; height:36px; border-radius:10px; background:var(--primary); color:#fff;
+          display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden;
+          padding:0; opacity:0; transform:scale(0.6); transition:width .18s ease, opacity .18s ease, transform .18s ease; }
+        .lc-send.show { width:36px; opacity:1; transform:scale(1); }
         .lc-send:disabled { background:#C7C9DA; }
 
         .lc-emoji-pop { position:absolute; bottom:56px; left:12px; background:var(--surface); border:1px solid var(--border);
@@ -638,6 +662,10 @@ export default function GroupChatInterface() {
           background:none; border:none; padding:6px 2px; margin-top:2px; }
         .lc-info-admin-btn { width:100%; background:var(--ink); color:var(--surface); border:none; border-radius:10px;
           padding:11px; font-size:13px; font-weight:600; margin-top:6px; }
+        .lc-leave-btn { width:100%; background:none; color:var(--danger); border:1px solid var(--border);
+          border-radius:10px; padding:11px; font-size:13px; font-weight:600; margin-top:8px; }
+        .lc-leave-btn:hover { background:#FDEAEA; }
+        .lc-leave-note { font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.4; text-align:center; }
 
         .lc-groups.drawer, .lc-info.drawer { position:absolute; top:0; bottom:0; z-index:6; box-shadow:0 0 24px rgba(20,20,43,.18); }
         .lc-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.35); z-index:4; }
@@ -704,6 +732,7 @@ export default function GroupChatInterface() {
                 key={m.id}
                 msg={m}
                 isOwn={m.sender_id === currentUser?.id}
+                canModerate={canModerate}
                 resolveSender={resolveSender}
                 isEditing={editingId === m.id}
                 editDraft={editDraft}
@@ -749,15 +778,9 @@ export default function GroupChatInterface() {
             value={draft}
             rows={1}
             onChange={handleDraftChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
           />
           <button className="lc-icon-btn" title="Voice message" onClick={handleVoiceClick}><Mic size={18} /></button>
-          <button className="lc-send" disabled={!draft.trim()} onClick={handleSend}><Send size={16} /></button>
+          <button className={`lc-send ${draft.trim() ? "show" : ""}`} onClick={handleSend}><Send size={16} /></button>
         </div>
       </div>
 
@@ -768,6 +791,8 @@ export default function GroupChatInterface() {
         groupDetails={groupDetails}
         members={members}
         onlineIds={onlineIds}
+        currentUserId={currentUser?.id}
+        myRole={myRole}
       />
     </div>
   );

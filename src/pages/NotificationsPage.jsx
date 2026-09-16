@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ChevronLeft, AtSign, Reply, Link2, UserPlus, Megaphone, Check, BellOff, Loader2
+  ChevronLeft, AtSign, Reply, Link2, UserPlus, Megaphone, Check, BellOff, Loader2, Settings, UserMinus
 } from "lucide-react";
 import { getNotifications, markAllRead, subscribeToNotifications, getMutedGroupIds, setGroupMuted } from "../lib/notifications";
 import { useAuth } from "../lib/AuthContext";
@@ -12,6 +12,8 @@ const ICONS = {
   invite: Link2,
   member_joined: UserPlus,
   announcement: Megaphone,
+  group_updated: Settings,
+  member_removed: UserMinus,
 };
 
 const ICON_COLORS = {
@@ -20,6 +22,8 @@ const ICON_COLORS = {
   invite: "#946200",
   member_joined: "#16C7A6",
   announcement: "#E5484D",
+  group_updated: "#4338CA",
+  member_removed: "#E5484D",
 };
 
 function timeAgo(iso) {
@@ -73,7 +77,7 @@ export default function NotificationsPage() {
   }
 
   function handleNotifClick(n) {
-    if (n.type === "member_joined") navigate(`/groups/${n.group_id}/members`);
+    if (n.type === "member_joined" || n.type === "member_removed") navigate(`/groups/${n.group_id}/members`);
     else if (n.type === "invite" && n.group?.invite_code) navigate(`/join/${n.group.invite_code}`);
     else if (n.group_id) navigate(`/groups/${n.group_id}`);
   }

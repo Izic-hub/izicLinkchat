@@ -204,7 +204,7 @@ export default function CreateGroupFlow() {
                 <input
                   className="cg-input"
                   style={{ marginTop: 8 }}
-                  placeholder="Describe your group's category"
+                  placeholder="Please specify a category"
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
                 />

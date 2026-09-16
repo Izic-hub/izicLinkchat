@@ -124,6 +124,13 @@ export async function regenerateInviteCode(groupId) {
   return code;
 }
 
+/** Leave a group — deletes the caller's own membership row directly by
+ *  group_id + user_id (no need to look up the row id first). */
+export async function leaveGroup(groupId, userId) {
+  const { error } = await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", userId);
+  if (error) throw error;
+}
+
 /** Permanently deletes a group. RLS restricts this to the host only.
  *  Everything else (members, messages, invites, mutes) cascades via the
  *  foreign keys already defined in schema.sql — nothing else to clean up. */

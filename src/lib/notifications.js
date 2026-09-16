@@ -1,14 +1,43 @@
 import { supabase } from "./supabaseClient";
 
+/**
+ * Fetches notifications, then separately fetches the actor profiles and
+ * groups involved and merges them in — rather than relying on PostgREST's
+ * foreign-key-name embedding hint (profiles!notifications_actor_id_fkey),
+ * which silently returns nothing if that auto-generated constraint name
+ * ever doesn't match exactly. This is slower by one round-trip but far
+ * more robust, and easy to reason about when debugging.
+ */
 export async function getNotifications(userId, limit = 50) {
-  const { data, error } = await supabase
+  const { data: notifs, error } = await supabase
     .from("notifications")
-    .select("*, actor:profiles!notifications_actor_id_fkey(id, username, display_name), group:groups(id, name, invite_code)")
+    .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return data;
+  if (notifs.length === 0) return [];
+
+  const actorIds = [...new Set(notifs.map((n) => n.actor_id).filter(Boolean))];
+  const groupIds = [...new Set(notifs.map((n) => n.group_id).filter(Boolean))];
+
+  const [actorsRes, groupsRes] = await Promise.all([
+    actorIds.length
+      ? supabase.from("profiles").select("id, username, display_name").in("id", actorIds)
+      : { data: [] },
+    groupIds.length
+      ? supabase.from("groups").select("id, name, invite_code").in("id", groupIds)
+      : { data: [] },
+  ]);
+
+  const actorsById = Object.fromEntries((actorsRes.data || []).map((a) => [a.id, a]));
+  const groupsById = Object.fromEntries((groupsRes.data || []).map((g) => [g.id, g]));
+
+  return notifs.map((n) => ({
+    ...n,
+    actor: n.actor_id ? actorsById[n.actor_id] : null,
+    group: n.group_id ? groupsById[n.group_id] : null,
+  }));
 }
 
 export async function markAllRead(userId) {
