@@ -1,113 +1,98 @@
-# LINKCHAT — project structure
+# LINKCHAT
 
-## Folder layout
+A group-chat platform — create a group, share one link, everyone's in the
+conversation. Built with React + Vite on the frontend, Supabase
+(Postgres, Auth, Realtime, Storage) on the backend.
+
+Live behavior: real-time messaging with edit/delete, image/file/voice
+attachments, public and private groups (private ones require host/admin
+approval to join), full member management, direct invites, notifications,
+4 switchable themes, PWA installability, and a platform-wide Super-Admin
+dashboard restricted to one specific account.
+
+## Project structure
 
 ```
 linkchat/
-├── .env.example
+├── .env.example          ← copy to .env and fill in your own Supabase values
 ├── package.json
-├── vite.config.js
+├── vite.config.js         (includes the PWA plugin config)
+├── vercel.json             (SPA rewrite rule — needed for client-side routing)
 ├── index.html
+├── public/
+│   └── icon.svg
+├── supabase/                ← run these in Supabase's SQL Editor, IN ORDER
+│   ├── 01_schema.sql          (base tables, RLS, triggers)
+│   ├── 02_fix_profile_trigger.sql
+│   ├── 03_fix_google_signup_trigger.sql
+│   ├── 04_fix_membership_policy.sql
+│   ├── 05_fix_phone_privacy.sql
+│   ├── 06_fix_delete_policies.sql
+│   ├── 07_fix_member_delete_policy.sql
+│   ├── 08_fix_leave_and_admin_delete.sql
+│   ├── 09_notifications_schema.sql
+│   ├── 10_fix_granular_notifications_part1.sql   ← run separately from part 2
+│   ├── 11_fix_granular_notifications_part2.sql
+│   ├── 12_storage_setup.sql
+│   ├── 13_storage_setup_attachments.sql
+│   └── 14_superadmin_schema.sql
+├── PRODUCTION_CHECKLIST.md   ← current status + what's needed to go live
 └── src/
     ├── main.jsx
-    ├── App.jsx                 <- routes every screen together
+    ├── App.jsx                 (every route lives here)
     ├── lib/
-    │   └── supabaseClient.js   <- single Supabase client, imported everywhere
-    ├── components/             <- (empty for now) shared bits: Avatar, Toast, etc.
-    │   └── .gitkeep
+    │   ├── supabaseClient.js     (the one shared Supabase client)
+    │   ├── AuthContext.jsx       (who's logged in, banned/admin flags — app-wide)
+    │   ├── ThemeContext.jsx      (active theme — app-wide)
+    │   ├── theme.css             (the 4 themes' color tokens + mobile layout fix)
+    │   ├── auth.js, groups.js, members.js, messages.js,
+    │   │   notifications.js, profiles.js, storage.js, superadmin.js
+    │   └── useClickOutside.js
+    ├── components/
+    │   ├── ThemeSwitcher.jsx
+    │   └── MemberProfileModal.jsx
     └── pages/
-        ├── LandingPage.jsx
-        ├── AuthScreen.jsx
-        ├── CreateGroupFlow.jsx
-        ├── JoinGroupFlow.jsx
-        ├── GroupChatInterface.jsx
-        ├── GroupMembersPage.jsx
-        ├── GroupAdminDashboard.jsx
-        ├── UserProfile.jsx
-        ├── SearchDiscovery.jsx
-        ├── NotificationsPage.jsx
-        └── EmptyErrorStates.jsx   <- dev-only reference, not linked from the UI
+        ├── LandingPage.jsx, AuthScreen.jsx
+        ├── CreateGroupFlow.jsx, JoinGroupFlow.jsx
+        ├── GroupChatInterface.jsx, GroupMembersPage.jsx, GroupAdminDashboard.jsx
+        ├── UserProfile.jsx, SearchDiscovery.jsx, NotificationsPage.jsx
+        ├── SuperAdminDashboard.jsx   (restricted to one account, see below)
+        └── EmptyErrorStates.jsx      (dev-only reference sheet, not linked in the UI)
 ```
 
-## Setup
+## Route map
 
-1. Run the commands in `SETUP.md` (or just below) once to scaffold + install.
-2. Copy the 10 screen `.jsx` files you already downloaded into `src/pages/` —
-   their filenames already match what `App.jsx` imports, so no renaming needed.
-3. Copy `.env.example` to `.env` and fill in your real Supabase project URL + anon key
-   once you create the project (next step, backend).
-4. `npm run dev`.
+| Path | Screen | Auth required? |
+|---|---|---|
+| `/` | Landing | No |
+| `/login`, `/signup` | Auth | No |
+| `/join/:code` | Join Group preview | No (joining itself needs an account) |
+| `/create` | Create Group | Yes |
+| `/groups/:groupId` | Group Chat | Yes |
+| `/groups/:groupId/members` | Group Members | Yes |
+| `/groups/:groupId/admin` | Admin Dashboard | Yes (host/admin of that group) |
+| `/profile` | User Profile | Yes |
+| `/search` | Search & Discovery | Yes |
+| `/notifications` | Notifications | Yes |
+| `/superadmin` | Platform Admin | Yes, and only one specific account |
+| `/dev/states` | Empty/error states reference | No (not linked anywhere in the UI) |
 
-## Why this shape
+## Setup (fresh clone)
 
-- **One route per screen** — `App.jsx` is the only file that knows the whole
-  app exists; every page component stays self-contained, same as when they
-  were single-file previews.
-- **`lib/supabaseClient.js`** is the one place a Supabase client gets created.
-  Every page will eventually `import { supabase } from '../lib/supabaseClient'`
-  instead of using its mock data array — that swap happens page by page.
-- **`components/`** is empty on purpose. Right now every screen defines its
-  own `Avatar`, badge, etc. inline. Once we start wiring real data, shared
-  pieces (Avatar, RoleBadge, Toast) should move here so all screens render
-  members/roles identically — worth doing once, not per-screen.
-
-
-# LINKCHAT — backend package (so far)
-
-## What's in here
-
-```
-linkchat-backend/
-└── src/
-    ├── lib/
-    │   ├── auth.js       <- sign up, sign in, sign out, auth state
-    │   ├── groups.js     <- create/join/list groups, invite codes
-    │   ├── messages.js   <- fetch, send, realtime subscription, typing
-    │   ├── members.js    <- roster, roles, mute/remove/ban
-    │   └── profiles.js   <- get/update profile, search
-    └── pages/
-        └── AuthScreen.jsx  <- the only page wired to real backend calls so far
+```bash
+npm install
+cp .env.example .env
+# fill in .env with your Supabase project's URL + anon key
+npm run dev
 ```
 
-This is not a standalone project — it's meant to be merged into your existing
-`linkchat-scaffold` project, matching the folder structure it already has.
+Then in Supabase, run everything in `supabase/` in numbered order (see
+that folder's own ordering above — 10 and 11 are a matched pair that
+must run as two separate executions, not pasted together in one go).
 
-## How to merge it
+## Deploying
 
-1. Unzip this.
-2. Copy everything inside `src/lib/` here into your project's `src/lib/`
-   (next to the `supabaseClient.js` that's already there — don't replace
-   that file, just add these five alongside it).
-3. Copy `src/pages/AuthScreen.jsx` here into your project's `src/pages/`,
-   **overwriting** the existing `AuthScreen.jsx`.
-4. Nothing else changes — `App.jsx`, `main.jsx`, and the other 9 page files
-   stay exactly as they are.
-
-## What still needs `.env`
-
-Every function in `lib/` calls the shared Supabase client, so none of this
-does anything until your project's `.env` has real values:
-
-```
-VITE_SUPABASE_URL=https://nhqkgzxwwcghizlafiey.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_kT3dvpAtiqdpx2M4kcw6yQ_ol_Yea62
-```
-
-Restart `npm run dev` after editing `.env` — Vite only reads it on startup.
-
-## What's wired vs. what's still mock data
-
-| Page | Status |
-|---|---|
-| AuthScreen | ✅ Wired — real sign up / sign in |
-| CreateGroupFlow | ⏳ Still mock data — next up |
-| JoinGroupFlow | ⏳ Still mock data |
-| GroupChatInterface | ⏳ Still mock data |
-| GroupMembersPage | ⏳ Still mock data |
-| GroupAdminDashboard | ⏳ Still mock data |
-| UserProfile | ⏳ Still mock data |
-| SearchDiscovery | ⏳ Still mock data |
-| NotificationsPage | Not backed by a `notifications` table yet — schema.sql doesn't include one |
-
-As each page gets wired, it'll come with the same treatment: updated file +
-this table updated so it's always clear what's real and what's still mock.
+See `PRODUCTION_CHECKLIST.md` for the full pre-launch list (Auth
+settings, environment variables on your host, GitHub push, final smoke
+test). `vercel.json` already has the SPA rewrite rule Vercel needs for
+client-side routing to work on direct page loads/refreshes.

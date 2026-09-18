@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronLeft, Users, AtSign, UserPlus, X, Loader2, Check } from "lucide-react";
+import { Search, ChevronLeft, UserPlus, X, Loader2, Check } from "lucide-react";
 import { searchGroups, searchPeople } from "../lib/profiles";
 import { getMyGroups, joinGroup } from "../lib/groups";
 import { useAuth } from "../lib/AuthContext";
