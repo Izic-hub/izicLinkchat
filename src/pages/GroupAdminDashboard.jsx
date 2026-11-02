@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Settings, Users, MessageSquare, Link2, ChevronLeft, Image as ImageIcon,
   Globe, Lock, Copy, RefreshCw, XCircle, QrCode, Check, Loader2,
-  Crown, Shield, UserMinus, Ban, AlertTriangle, UserPlus, Trash2, X
+  Crown, Shield, UserMinus, Ban, AlertTriangle, UserPlus, Trash2, X, User
 } from "lucide-react";
 import { getGroupDetails, updateGroupSettings, regenerateInviteCode, inviteUserToGroup, deleteGroup } from "../lib/groups";
 import {

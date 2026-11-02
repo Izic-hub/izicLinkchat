@@ -164,7 +164,7 @@ export default function CreateGroupFlow() {
       `}</style>
 
       <div className="cg-card">
-        <div className="cg-brand"><span className="cg-brand-icon"><MessagesSquare size={15} /></span>LINKCHAT</div>
+        <div className="cg-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}><span className="cg-brand-icon"><MessagesSquare size={15} /></span>LINKCHAT</div>
 
         {step === "form" && (
           <>

@@ -35,7 +35,18 @@ export async function getAllUsers() {
   return data;
 }
 
+/** Bans or unbans a user. Banning also ends their live sessions right away
+ *  (Edge Function "revoke-user-sessions"), so they're kicked out now rather
+ *  than only blocked the next time the app reloads. Returns { revoked }:
+ *  false means the ban was saved but the live sessions couldn't be ended. */
 export async function setUserBanned(userId, banned) {
   const { error } = await supabase.from("profiles").update({ banned }).eq("id", userId);
   if (error) throw error;
+  if (!banned) return { revoked: true };
+
+  const { error: fnError } = await supabase.functions.invoke("revoke-user-sessions", {
+    body: { targetUserId: userId },
+  });
+  if (fnError) console.error("Couldn't revoke sessions:", fnError);
+  return { revoked: !fnError };
 }

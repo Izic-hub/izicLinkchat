@@ -151,7 +151,7 @@ export default function AuthScreen() {
       `}</style>
 
       <div className="au-card">
-        <div className="au-brand"><span className="au-brand-icon"><MessagesSquare size={15} /></span>LINKCHAT</div>
+        <div className="au-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}><span className="au-brand-icon"><MessagesSquare size={15} /></span>LINKCHAT</div>
 
         {!authLoading && user ? (
           <>

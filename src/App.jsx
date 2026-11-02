@@ -83,29 +83,29 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Screen><LandingPage /></Screen>} />
-            <Route path="/login" element={<Screen><AuthScreen /></Screen>} />
-            <Route path="/signup" element={<Screen><AuthScreen /></Screen>} />
-            <Route path="/join/:code" element={<Screen><JoinGroupFlow /></Screen>} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Screen><LandingPage /></Screen>} />
+          <Route path="/login" element={<Screen><AuthScreen /></Screen>} />
+          <Route path="/signup" element={<Screen><AuthScreen /></Screen>} />
+          <Route path="/join/:code" element={<Screen><JoinGroupFlow /></Screen>} />
 
-            <Route path="/create" element={<RequireAuth><Screen><CreateGroupFlow /></Screen></RequireAuth>} />
-            <Route path="/groups/:groupId" element={<RequireAuth><Screen><GroupChatInterface /></Screen></RequireAuth>} />
-            <Route path="/groups/:groupId/members" element={<RequireAuth><Screen><GroupMembersPage /></Screen></RequireAuth>} />
-            <Route path="/groups/:groupId/admin" element={<RequireAuth><Screen><GroupAdminDashboard /></Screen></RequireAuth>} />
-            <Route path="/profile" element={<RequireAuth><Screen><UserProfile /></Screen></RequireAuth>} />
-            <Route path="/search" element={<RequireAuth><Screen><SearchDiscovery /></Screen></RequireAuth>} />
-            <Route path="/notifications" element={<RequireAuth><Screen><NotificationsPage /></Screen></RequireAuth>} />
+          <Route path="/create" element={<RequireAuth><Screen><CreateGroupFlow /></Screen></RequireAuth>} />
+          <Route path="/groups/:groupId" element={<RequireAuth><Screen><GroupChatInterface /></Screen></RequireAuth>} />
+          <Route path="/groups/:groupId/members" element={<RequireAuth><Screen><GroupMembersPage /></Screen></RequireAuth>} />
+          <Route path="/groups/:groupId/admin" element={<RequireAuth><Screen><GroupAdminDashboard /></Screen></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><Screen><UserProfile /></Screen></RequireAuth>} />
+          <Route path="/search" element={<RequireAuth><Screen><SearchDiscovery /></Screen></RequireAuth>} />
+          <Route path="/notifications" element={<RequireAuth><Screen><NotificationsPage /></Screen></RequireAuth>} />
 
-            <Route path="/superadmin" element={<RequireSuperAdmin><Screen><SuperAdminDashboard /></Screen></RequireSuperAdmin>} />
+          <Route path="/superadmin" element={<RequireSuperAdmin><Screen><SuperAdminDashboard /></Screen></RequireSuperAdmin>} />
 
-            {/* dev-only reference sheet, not linked from anywhere in the UI */}
-            <Route path="/dev/states" element={<Screen><EmptyErrorStates /></Screen>} />
+          {/* dev-only reference sheet, not linked from anywhere in the UI */}
+          <Route path="/dev/states" element={<Screen><EmptyErrorStates /></Screen>} />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AuthProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

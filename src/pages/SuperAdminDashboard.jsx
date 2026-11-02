@@ -70,7 +70,10 @@ function UsersTab() {
   async function toggleBan(u) {
     setBusyId(u.id);
     try {
-      await setUserBanned(u.id, !u.banned);
+      const result = await setUserBanned(u.id, !u.banned);
+      if (!u.banned && result?.revoked === false) {
+        alert("They're banned, but their active sessions couldn't be ended right now (is the revoke-user-sessions function deployed?). They'll be blocked the next time the app loads.");
+      }
       setUsers((prev) => prev.map((row) => (row.id === u.id ? { ...row, banned: !u.banned } : row)));
     } catch (err) {
       alert(err.message || "Couldn't update that user.");

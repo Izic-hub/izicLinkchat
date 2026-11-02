@@ -107,7 +107,7 @@ export default function JoinGroupFlow() {
       `}</style>
 
       <div className="jg-card">
-        <div className="jg-brand"><span className="jg-brand-icon"><MessagesSquare size={13} /></span>LINKCHAT</div>
+        <div className="jg-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}><span className="jg-brand-icon"><MessagesSquare size={13} /></span>LINKCHAT</div>
 
         {loading && (
           <div style={{ padding: "30px 0" }}><Loader2 size={22} className="jg-spin" /></div>

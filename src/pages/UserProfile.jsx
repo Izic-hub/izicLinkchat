@@ -7,6 +7,7 @@ import {
 import { getProfile, updateProfile } from "../lib/profiles";
 import { getMyGroups } from "../lib/groups";
 import { signOut } from "../lib/auth";
+import { signOutEverywhere } from "../lib/sessionGuard";
 import { uploadImage } from "../lib/storage";
 import { useAuth } from "../lib/AuthContext";
 import ThemeSwitcher from "../components/ThemeSwitcher";
@@ -280,6 +281,16 @@ export default function UserProfile() {
             <ShieldCheck size={14} />Platform Admin
           </button>
         )}
+        <button
+          className="pf-logout-btn"
+          onClick={async () => {
+            if (!window.confirm("Sign out of every device, including this one?")) return;
+            try { await signOutEverywhere(); } catch (e) { alert(e.message || "Couldn't sign out everywhere."); return; }
+            await signOut(); navigate("/");
+          }}
+        >
+          <LogOut size={14} />Sign out of all devices
+        </button>
         <button className="pf-logout-btn" onClick={async () => { await signOut(); navigate("/"); }}>
           <LogOut size={14} />Log out
         </button>

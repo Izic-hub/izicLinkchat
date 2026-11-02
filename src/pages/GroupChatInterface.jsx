@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Search, Plus, Settings, Compass, Users, Hash, Smile, Paperclip,
   Image as ImageIcon, Mic, Send, MoreVertical, ChevronLeft, Info,
   Menu, X, Shield, Crown, Bell, Pin, MessagesSquare, Loader2, Pencil,
-  Trash2, Check, Square, File as FileIcon, Download
+  Trash2, Check, Square, File as FileIcon, Download, Lock
 } from "lucide-react";
 import { getProfile } from "../lib/profiles";
 import { getMyGroups, getGroupDetails, leaveGroup } from "../lib/groups";
@@ -15,6 +15,7 @@ import {
 } from "../lib/messages";
 import { useAuth } from "../lib/AuthContext";
 import { useClickOutside } from "../lib/useClickOutside";
+import PrivateChat from "../components/PrivateChat";
 
 function initialsOf(name) {
   return (name || "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -49,7 +50,7 @@ function GroupRail({ onDrawerToggle }) {
   const navigate = useNavigate();
   return (
     <nav className="lc-rail">
-      <div className="lc-logo"><MessagesSquare size={20} /></div>
+      <button className="lc-logo" onClick={() => navigate("/")} title="Home" aria-label="LinkChat home"><MessagesSquare size={20} /></button>
       <button className="lc-rail-btn" title="Search" onClick={() => navigate("/search")}><Search size={18} /></button>
       <button className="lc-rail-btn on" title="My groups" onClick={onDrawerToggle}><Hash size={18} /></button>
       <button className="lc-rail-btn" title="Discover" onClick={() => navigate("/search")}><Compass size={18} /></button>
@@ -277,6 +278,17 @@ export default function GroupChatInterface() {
   const [showInfo, setShowInfo] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [privateOpen, setPrivateOpen] = useState(false);
+  const [dmUserId, setDmUserId] = useState(null);
+
+  // A link like /groups/ID?dm=USERID (from a notification) jumps straight
+  // into that private chat; switching group closes the private view.
+  useEffect(() => {
+    const dm = searchParams.get("dm");
+    setPrivateOpen(!!dm);
+    setDmUserId(dm);
+  }, [groupId, searchParams]);
   const moreMenuRef = useClickOutside(() => setShowMoreMenu(false));
   const emojiRef = useClickOutside(() => setShowEmoji(false));
 
@@ -552,6 +564,8 @@ export default function GroupChatInterface() {
         .lc-dot.on { background:var(--accent); }
 
         .lc-center { flex:1; display:flex; flex-direction:column; min-width:0; }
+        .lc-center.dm-open .lc-messages, .lc-center.dm-open .lc-composer { display:none; }
+        .lc-root .lc-logo { background:var(--primary); color:#fff; cursor:pointer; }
         .lc-header { min-height:64px; border-bottom:1px solid var(--border); display:flex; align-items:center;
           gap:12px; padding:10px 18px; flex-shrink:0; }
         .lc-header-text { flex:1; min-width:0; }
@@ -698,7 +712,7 @@ export default function GroupChatInterface() {
         onClose={() => setShowGroups(false)}
       />
 
-      <div className="lc-center">
+      <div className={`lc-center ${privateOpen ? "dm-open" : ""}`}>
         <div className="lc-header">
           <button className="lc-icon-btn" onClick={() => setShowGroups(true)} title="Groups"><Menu size={18} /></button>
           <Avatar initials={initialsOf(groupDetails?.name)} imageUrl={groupDetails?.image_url} size={38} />
@@ -706,11 +720,22 @@ export default function GroupChatInterface() {
             <strong>{groupDetails?.name || "Loading…"}</strong>
             <span className="muted">{onlineIds.length} online · {members.length} members</span>
           </div>
+          <button
+            className="lc-icon-btn"
+            title="Private chats"
+            aria-pressed={privateOpen}
+            style={privateOpen ? { color: "var(--primary)" } : undefined}
+            onClick={() => {
+              if (privateOpen) { setPrivateOpen(false); setDmUserId(null); setSearchParams({}); }
+              else setPrivateOpen(true);
+            }}
+          ><Lock size={18} /></button>
           <button className="lc-icon-btn" onClick={() => setShowInfo(true)} title="Group info"><Info size={18} /></button>
           <div style={{ position: "relative" }}>
             <button className="lc-icon-btn" onClick={() => setShowMoreMenu((v) => !v)} title="More"><MoreVertical size={18} /></button>
             {showMoreMenu && (
               <div className="lc-more-menu" ref={moreMenuRef}>
+                <button onClick={() => { setShowMoreMenu(false); navigate("/"); }}><MessagesSquare size={15} />Home page</button>
                 <button onClick={() => { setShowMoreMenu(false); navigate("/search"); }}><Search size={15} />Search</button>
                 <button onClick={() => { setShowMoreMenu(false); navigate("/search"); }}><Compass size={15} />Discover</button>
                 <button onClick={() => { setShowMoreMenu(false); navigate("/create"); }}><Plus size={15} />Create group</button>
@@ -720,6 +745,16 @@ export default function GroupChatInterface() {
             )}
           </div>
         </div>
+
+        {privateOpen && currentUser && (
+          <PrivateChat
+            groupId={groupId}
+            me={currentUser}
+            members={members}
+            activeUserId={dmUserId}
+            onSelect={setDmUserId}
+          />
+        )}
 
         <div className="lc-messages" ref={listRef}>
           {messagesLoading ? (
